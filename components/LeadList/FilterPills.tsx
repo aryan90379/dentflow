@@ -1,7 +1,6 @@
 "use client";
 import React from 'react';
 import { CheckSquare } from 'lucide-react';
-
 type FilterType = 'all' | 'hot' | 'warm' | 'cold' | 'booked';
 
 interface FilterPillsProps {
@@ -10,15 +9,21 @@ interface FilterPillsProps {
   counts: Record<FilterType, number>;
 }
 
+type FilterItem = {
+  id: FilterType;
+  label: string;
+  color: string;
+  dot?: boolean;
+  icon?: boolean;
+};
 export default function FilterPills({ activeFilter, onSelectFilter, counts }: FilterPillsProps) {
-  const filters = [
+  const filters: FilterItem[] = [
     { id: 'all', label: 'All', color: '#007AFF' },
     { id: 'hot', label: 'Hot', color: '#FF3B30', dot: true },
     { id: 'warm', label: 'Warm', color: '#FF9500', dot: true },
     { id: 'cold', label: 'Cold', color: '#000000', dot: true },
     { id: 'booked', label: 'Booked', color: '#34C759', icon: true },
   ];
-
   return (
     <div className="flex gap-2 overflow-x-auto px-4 pb-4 scrollbar-hide">
       {filters.map((f) => {

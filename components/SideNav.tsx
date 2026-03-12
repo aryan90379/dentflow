@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import {
   HelpCircle,
   X,
-  FaCoins,
+ 
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
