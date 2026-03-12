@@ -1,0 +1,98 @@
+[
+  {
+    "id": "65f1c2b3a4d5e6f708192a3b",
+    "name": "Priya Sharma",
+    "phone": "+91 98765 43210",
+    "email": "priya.sharma@example.com",
+    "treatment": "Teeth Whitening",
+    "source": "GBP",
+    "timeAgo": "2h ago",
+    "createdAt": "2026-03-12T08:15:00Z",
+    "status": "hot",
+    "notes": "Looking to get treatment done before a family wedding next weekend. Highly responsive."
+  },
+  {
+    "id": "65f1c2b3a4d5e6f708192a3c",
+    "name": "Rahul Desai",
+    "phone": "+91 98765 43211",
+    "email": "r.desai88@example.com",
+    "treatment": "Root Canal",
+    "source": "WhatsApp Direct",
+    "timeAgo": "4h ago",
+    "createdAt": "2026-03-12T06:00:00Z",
+    "status": "warm",
+    "notes": "Experiencing mild pain, wants to know the cost estimate before booking."
+  },
+  {
+    "id": "65f1c2b3a4d5e6f708192a3d",
+    "name": "Ananya Joshi",
+    "phone": "+91 98765 43212",
+    "email": "ananya.j@example.com",
+    "treatment": "Braces",
+    "source": "Instagram",
+    "timeAgo": "1d ago",
+    "createdAt": "2026-03-11T14:30:00Z",
+    "status": "booked",
+    "notes": "Consultation booked for Saturday morning. Sent intake forms via email."
+  },
+  {
+    "id": "65f1c2b3a4d5e6f708192a3e",
+    "name": "Kiran Patil",
+    "phone": "+91 98765 43213",
+    "email": "kiranpatil.work@example.com",
+    "treatment": "Checkup",
+    "source": "Practo",
+    "timeAgo": "2d ago",
+    "createdAt": "2026-03-10T09:45:00Z",
+    "status": "cold",
+    "notes": "Missed follow-up call. Send automated SMS reminder tomorrow."
+  },
+  {
+    "id": "65f1c2b3a4d5e6f708192a3f",
+    "name": "Suresh Nair",
+    "phone": "+91 98765 43214",
+    "email": "snair_kerala@example.com",
+    "treatment": "Cleaning",
+    "source": "Website",
+    "timeAgo": "2d ago",
+    "createdAt": "2026-03-10T11:20:00Z",
+    "status": "warm",
+    "notes": "Filled out the website form. Requested an evening slot."
+  },
+  {
+    "id": "65f1c2b3a4d5e6f708192a40",
+    "name": "Meera Iyer",
+    "phone": "+91 98765 43215",
+    "email": "meera.iyer92@example.com",
+    "treatment": "Implant",
+    "source": "GBP",
+    "timeAgo": "3d ago",
+    "createdAt": "2026-03-09T16:10:00Z",
+    "status": "hot",
+    "notes": "Very interested in immediate load implants. Asked for EMI options."
+  },
+  {
+    "id": "65f1c2b3a4d5e6f708192a41",
+    "name": "Vikram Singh",
+    "phone": "+91 98765 43216",
+    "email": "vikram.singh.tech@example.com",
+    "treatment": "Wisdom Tooth",
+    "source": "Instagram",
+    "timeAgo": "4d ago",
+    "createdAt": "2026-03-08T10:05:00Z",
+    "status": "booked",
+    "notes": "Extraction scheduled. Pre-op instructions sent via WhatsApp."
+  },
+  {
+    "id": "65f1c2b3a4d5e6f708192a42",
+    "name": "Neha Kapoor",
+    "phone": "+91 98765 43217",
+    "email": "n.kapoor.design@example.com",
+    "treatment": "Veneers",
+    "source": "WhatsApp Direct",
+    "timeAgo": "5d ago",
+    "createdAt": "2026-03-07T13:50:00Z",
+    "status": "warm",
+    "notes": "Shared reference photos of desired smile. Needs a call back from the doctor to discuss feasibility."
+  }
+]
