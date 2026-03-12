@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Zenth Lab",
+  title: "Dent Lab",
   description: "Management dashboard for dental clinics to track leads, appointments, and patient data",
 };
 

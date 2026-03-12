@@ -259,9 +259,9 @@ const SideNav = () => {
                 `}
               >
                 <h1 className="text-xl font-bold tracking-tight whitespace-nowrap">
-                  <span className="text-black">Zenth</span>
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-blue-400 ml-1">
-                    Lab
+                  <span className="text-black">Dent</span>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-blue-400 ">
+                    Flow
                   </span>
                 </h1>
               </div>
@@ -312,7 +312,7 @@ const SideNav = () => {
                   height={20}
                 />
               </div>
-              <span className="font-bold text-lg text-slate-800">Zenth Lab</span>
+              <span className="font-bold text-lg text-slate-800">Dent Flow</span>
             </div>
             <button
               onClick={closeMobileMenu}
