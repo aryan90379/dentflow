@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "InfNovaa",
-  description: "Influencer Marketing Platform Powered By AI",
+  title: "Zenth Lab",
+  description: "Management dashboard for dental clinics to track leads, appointments, and patient data",
 };
 
 interface RootLayoutProps {

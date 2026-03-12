@@ -246,7 +246,7 @@ const SideNav = () => {
             <div className="flex items-center">
               <div className="bg-[#0a0015] p-2 rounded-lg shadow-lg shadow-violet-200 shrink-0 transition-transform duration-300 hover:scale-105">
                 <Image
-                  src="https://profile-infnova.b-cdn.net/infnova_assets/logo.png"
+                  src="logo.png"
                   alt="logo"
                   width={20}
                   height={20}
@@ -259,9 +259,9 @@ const SideNav = () => {
                 `}
               >
                 <h1 className="text-xl font-bold tracking-tight whitespace-nowrap">
-                  <span className="text-black">Inf</span>
+                  <span className="text-black">Zenth</span>
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-blue-400 ml-1">
-                    Novaa
+                    Lab
                   </span>
                 </h1>
               </div>
@@ -306,13 +306,13 @@ const SideNav = () => {
             <div className="flex items-center gap-2">
               <div className="bg-[#0a0015] p-2 rounded-lg shadow-lg shadow-violet-200">
                 <Image
-                  src="https://profile-infnova.b-cdn.net/infnova_assets/logo.png"
+                  src="logo.png"
                   alt="logo"
                   width={20}
                   height={20}
                 />
               </div>
-              <span className="font-bold text-lg text-slate-800">InfNova</span>
+              <span className="font-bold text-lg text-slate-800">Zenth Lab</span>
             </div>
             <button
               onClick={closeMobileMenu}

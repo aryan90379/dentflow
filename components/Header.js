@@ -25,7 +25,7 @@ const Header = () => {
     }, [toggleCollapse]);
 
     return (
-        <nav className="sticky top-0 -mb-4 w-full h-14 transition-all duration-300 bg-white/75 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60 z-50">
+        <nav className="sticky top-0 -mb-4 w-full h-14 transition-all duration-300 bg-white/75 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60 ">
             <div className="relative h-full flex items-center justify-between px-4 sm:px-6">
                 {/* Left side */}
                 <div className="flex items-center gap-4">
