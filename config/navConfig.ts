@@ -25,7 +25,7 @@ export const getNavItems = (): MenuGroup[] => {
     {
       title: "Main",
       items: [
-        { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+        // { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
         { name: "Appointments", href: "/appointments", icon: Calendar },
         { name: "Lead List", href: "/leads", icon: ClipboardList },
         { name: "Patients", href: "/patients", icon: Users },
