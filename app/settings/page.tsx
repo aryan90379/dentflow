@@ -156,9 +156,10 @@ export default function SettingsPage() {
             {/* Map & Address Card */}
             <div className="bg-white/80 backdrop-blur-xl border border-white/60 rounded-[2rem] p-2 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col h-full">
               {/* Embedded Google Map */}
+          {/* Embedded Google Map */}
               <div className="w-full h-64 sm:h-80 rounded-[1.5rem] overflow-hidden bg-slate-100 relative">
                 <iframe 
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3769.735147513813!2d72.91093367591605!3d19.11925525061611!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7c7cc6c5d1e47%3A0x6b45e751842ff841!2sThe%20Tooth%20Junction!5e0!3m2!1sen!2sin!4v1710335000000!5m2!1sen!2sin" 
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d19825.978612914147!2d72.89601319223627!3d19.135640149530005!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7c70f6aa346d3%3A0x6a99320aee580053!2sThe%20Tooth%20Junction!5e0!3m2!1sen!2sas!4v1773390085394!5m2!1sen!2sas" 
                   width="100%" 
                   height="100%" 
                   style={{ border: 0 }} 
@@ -168,7 +169,6 @@ export default function SettingsPage() {
                   className="absolute inset-0"
                 />
               </div>
-              
               {/* Address Details */}
               <div className="p-6 sm:p-8 flex items-start gap-4">
                 <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl shrink-0 mt-1">
