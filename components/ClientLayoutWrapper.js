@@ -1,12 +1,23 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import Header from "./Header";
 import SideNav from "./SideNav";
 import { useHeaderStore } from "@/store/useHeaderStore";
 
 export default function ClientLayoutWrapper({ children }) {
+    const { status, data: session } = useSession();
+
+
     const { isCollapsed, setCollapsed } = useHeaderStore();
 
+       if (!session) {
+        return (
+            <div className="h-full bg-gray-50/50">
+                {children}
+            </div>
+        );
+    }
     return (
         <div className="min-h-full bg-white transition-all duration-500">
             <SideNav
