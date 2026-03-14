@@ -11,7 +11,8 @@ import { signOut } from 'next-auth/react';
 import { fetchUserSettings, updateUserSettings,getCalendarAuthUrlAction } from '@/actions/settings.actions';
 import Autocomplete from "react-google-autocomplete";
 // --- CUSTOM TAILWIND SWITCH COMPONENT ---
-
+import Script from 'next/script'; // 👈 Next.js Script optimizer
+import { linkWhatsAppAction } from '@/actions/settings.actions'; // 👈 Your new action
 
 const CustomSwitch = ({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) => (
   <button
@@ -70,6 +71,18 @@ export default function SettingsPage() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
 
+
+  // Initialize Facebook SDK for WhatsApp Embedded Signup
+  useEffect(() => {
+    (window as any).fbAsyncInit = function() {
+      (window as any).FB.init({
+        appId      : process.env.NEXT_PUBLIC_META_APP_ID, // Your Meta App ID
+        cookie     : true,
+        xfbml      : true,
+        version    : 'v19.0'
+      });
+    };
+  }, []);
   // --- DATA FETCHING ---
   useEffect(() => {
     async function loadSettings() {
@@ -133,6 +146,43 @@ export default function SettingsPage() {
     await signOut({ callbackUrl: '/signin' });
   };
   
+
+  const handleConnectWhatsApp = () => {
+    const FB = (window as any).FB;
+    if (!FB) return alert("Meta SDK not loaded yet. Please wait a second.");
+
+    // Trigger the popup
+    FB.login((response: any) => {
+      if (response.authResponse) {
+        const accessToken = response.authResponse.accessToken;
+        
+        // Send the token to your backend
+        setIsSaving(true);
+        linkWhatsAppAction(accessToken).then((res) => {
+          if (res.success) {
+            alert("✅ WhatsApp connected successfully!");
+            setFormData(prev => ({
+              ...prev, integrations: { ...prev.integrations, whatsappApi: true }
+            }));
+          } else {
+            alert("Failed to connect: " + res.error);
+          }
+          setIsSaving(false);
+        });
+      } else {
+        console.log('User cancelled login or did not fully authorize.');
+      }
+    }, {
+      // 🔥 These exact scopes and extras trigger the WhatsApp Onboarding UI
+      scope: 'whatsapp_business_management,whatsapp_business_messaging',
+      extras: {
+        feature: 'whatsapp_embedded_signup',
+        version: 2,
+        sessionInfoVersion: '3',
+        setup: { /* Optional pre-filled data */ }
+      }
+    });
+  };
 const handleConnectCalendar = async () => {
     try {
       // 1. Fetch the URL securely via the Server Action
@@ -177,6 +227,12 @@ const handlePlaceSelected = (place: any) => {
   const inputClass = "w-full bg-white/50 border border-indigo-200 rounded-lg px-3 py-1.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all";
 
   return (
+    <>
+    <Script 
+        src="https://connect.facebook.net/en_US/sdk.js" 
+        strategy="lazyOnload" 
+        crossOrigin="anonymous" 
+      />
     <div className="flex-1 min-h-screen bg-[#F5F5F7] font-sans text-slate-900 pb-32 selection:bg-indigo-100 relative">
       
       {/* BACKGROUND EFFECTS */}
@@ -275,7 +331,7 @@ const handlePlaceSelected = (place: any) => {
                   <span className="text-base font-bold text-slate-700">New Lead Alerts</span>
                   <CustomSwitch checked={formData.preferences.alertsEnabled} onChange={(v) => handleNestedChange('preferences', 'alertsEnabled', v)} />
                 </div>
-                <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+              <div className="flex justify-between items-center pb-4 border-b border-slate-100">
                   <span className="text-base font-bold text-slate-700">Daily Summary</span>
                   <CustomSwitch checked={formData.preferences.emailEnabled} onChange={(v) => handleNestedChange('preferences', 'emailEnabled', v)} />
                 </div>
@@ -366,9 +422,22 @@ const handlePlaceSelected = (place: any) => {
                       Connect
                     </button>
                   )}
-                </div>                <div className="flex items-center justify-between p-5 bg-slate-50/50 border border-slate-100 rounded-2xl">
+                </div>   
+                          <div className="flex items-center justify-between p-5 bg-slate-50/50 border border-slate-100 rounded-2xl">
                   <span className="text-sm font-bold text-slate-700">WhatsApp API</span>
-                  <ShieldCheck size={20} className={formData.integrations.whatsappApi ? "text-emerald-500" : "text-slate-300"} />
+                  {formData.integrations.whatsappApi ? (
+                    <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full text-xs font-bold">
+                      <ShieldCheck size={16} /> Connected
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={handleConnectWhatsApp}
+                      disabled={isSaving}
+                      className="text-xs font-bold bg-indigo-50 text-indigo-600 px-4 py-2 rounded-full hover:bg-indigo-100 transition-colors"
+                    >
+                      Connect
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -417,5 +486,6 @@ const handlePlaceSelected = (place: any) => {
       </AnimatePresence>
 
     </div>
+    </>
   );
 }

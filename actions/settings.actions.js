@@ -70,3 +70,21 @@ export async function getCalendarAuthUrlAction() {
     return null;
   }
 }
+export async function linkWhatsAppAction(facebookAccessToken) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/api/settings/whatsapp/connect`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ accessToken: facebookAccessToken })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to link WhatsApp");
+    
+    return { success: true };
+  } catch (error) {
+    console.error("linkWhatsAppAction Error:", error.message);
+    return { success: false, error: error.message };
+  }
+}
