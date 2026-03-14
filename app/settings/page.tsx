@@ -6,11 +6,13 @@ import {
   ShieldCheck, Stethoscope, Edit2, Save, X
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { signOut } from 'next-auth/react';
 import { fetchUserSettings, updateUserSettings,getCalendarAuthUrlAction } from '@/actions/settings.actions';
 import Autocomplete from "react-google-autocomplete";
 // --- CUSTOM TAILWIND SWITCH COMPONENT ---
+
+
 const CustomSwitch = ({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) => (
   <button
     onClick={() => onChange(!checked)}
@@ -26,8 +28,25 @@ const CustomSwitch = ({ checked, onChange }: { checked: boolean; onChange: (v: b
   </button>
 );
 
-const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } };
-const itemVariants = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } };
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 24
+    }
+  }
+};
 
 export default function SettingsPage() {
   const router = useRouter();
