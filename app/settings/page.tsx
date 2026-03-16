@@ -147,12 +147,18 @@ export default function SettingsPage() {
   };
   
 
-  const handleConnectWhatsApp = () => {
+const handleConnectWhatsApp = () => {
+    console.log("CONNECT BUTTON CLICKED");
     const FB = (window as any).FB;
-    if (!FB) return alert("Meta SDK not loaded yet. Please wait a second.");
 
-    // Trigger the popup
+    if (!FB) {
+      alert("Meta SDK not loaded yet.");
+      return;
+    }
+
+    // Trigger the standard OAuth popup
     FB.login((response: any) => {
+      console.log("FB LOGIN RESPONSE", response);
       if (response.authResponse) {
         const accessToken = response.authResponse.accessToken;
         
@@ -173,14 +179,9 @@ export default function SettingsPage() {
         console.log('User cancelled login or did not fully authorize.');
       }
     }, {
-      // 🔥 These exact scopes and extras trigger the WhatsApp Onboarding UI
+      // 🔥 Keep the scopes, but REMOVE the "whatsapp_embedded_signup" extra
       scope: 'whatsapp_business_management,whatsapp_business_messaging',
-      extras: {
-        feature: 'whatsapp_embedded_signup',
-        version: 2,
-        sessionInfoVersion: '3',
-        setup: { /* Optional pre-filled data */ }
-      }
+      return_scopes: true
     });
   };
 const handleConnectCalendar = async () => {
@@ -230,7 +231,7 @@ const handlePlaceSelected = (place: any) => {
     <>
     <Script 
         src="https://connect.facebook.net/en_US/sdk.js" 
-        strategy="lazyOnload" 
+        strategy="afterInteractive" 
         crossOrigin="anonymous" 
       />
     <div className="flex-1 min-h-screen bg-[#F5F5F7] font-sans text-slate-900 pb-32 selection:bg-indigo-100 relative">

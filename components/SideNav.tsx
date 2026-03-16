@@ -17,7 +17,7 @@ import { useUIStore } from "@/store/useUIStore";
 import { useHeaderStore } from "@/store/useHeaderStore";
 
 // Simple profile picture placeholder
-const DEFAULT_AVATAR = "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png";
+const DEFAULT_AVATAR = "https://upload.wikimedia.o rg/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png";
 
 // ---------- NavItem ----------
 interface NavItemProps {
@@ -159,7 +159,7 @@ const ProfileSection = ({ collapsed, userImg, userName, userEmail }: ProfileSect
 
   return (
     <Link
-      href="/profile"
+      href="/settings"
       onClick={closeMobileMenu}
       className="relative mx-3 mb-4 p-2 rounded-xl flex items-center cursor-pointer border border-transparent transition-all duration-400 ease-[cubic-bezier(0.4,0,0.2,1)] bg-slate-50 hover:bg-slate-100 hover:border-slate-200 overflow-hidden"
     >
@@ -244,7 +244,7 @@ const SideNav = () => {
           {/* Logo */}
           <Link href="/dashboard" className="h-16 flex items-center flex-shrink-0 px-5">
             <div className="flex items-center">
-              <div className="bg-[#0a0015] p-2 rounded-lg shadow-lg shadow-violet-200 shrink-0 transition-transform duration-300 hover:scale-105">
+              <div className=" p-2 rounded-lg  shadow-inner shrink-0 transition-transform duration-300 hover:scale-105">
                 <Image
                   src="logo.png"
                   alt="logo"

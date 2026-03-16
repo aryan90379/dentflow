@@ -148,7 +148,7 @@ export default function CampaignsPage() {
 
   return (
     <div className="flex-1 min-h-screen relative font-sans text-slate-900 pb-20">
-      <ThemedBackground />
+      {/* <ThemedBackground /> */}
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         

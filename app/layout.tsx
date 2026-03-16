@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Dent Lab",
-  description: "Management dashboard for dental clinics to track leads, appointments, and patient data",
+  title: "DentFlow | Zenthlab",
+  description: "Management dashboard for dental clinics to track leads, appointments, and patient data, by Zenthlab.",
 };
 
 interface RootLayoutProps {

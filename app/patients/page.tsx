@@ -1,11 +1,19 @@
 "use client";
-import React, { useState, useMemo } from 'react';
-import { Search, UploadCloud, Lightbulb, ArrowLeft, ArrowUpRight } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Search, Plus, Lightbulb, ArrowLeft, ArrowUpRight, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import patientsData from '@/data/patients.json'; // Ensure this path matches your JSON location
+import { getPatientsAction } from '@/actions/patientActions';
+import AddPatientModal from '@/components/Patient/AddPatientModal'; // 👈 Import the modal
 
 type FilterType = 'all' | 'dormant' | 'pending_tx' | 'active';
+
+interface PatientType {
+  _id: string;
+  name: string;
+  status: string;
+  lastVisit: string;
+}
 
 const STATUS_CONFIG = {
   active: { color: '#16a34a', bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', label: 'ACTIVE' },
@@ -13,20 +21,27 @@ const STATUS_CONFIG = {
   pending_tx: { color: '#dc2626', bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', label: 'PENDING TX' },
 };
 
-// Fallback mock data if your JSON is empty
-const fallbackPatients = [
-  { id: '1', name: 'Divya Rao', status: 'dormant', lastVisit: '8 months ago' },
-  { id: '2', name: 'Rahul Gupta', status: 'active', lastVisit: '2 weeks ago' },
-  { id: '3', name: 'Priya Sharma', status: 'pending_tx', lastVisit: '1 month ago' },
-];
-
 export default function PatientsListPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [patients, setPatients] = useState<PatientType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false); // 👈 Modal state
 
-  const dataToUse = patientsData && patientsData.length > 0 ? patientsData : fallbackPatients;
+  // Extracted fetch function so we can reuse it after adding a patient
+  const fetchPatients = async () => {
+    setIsLoading(true);
+    const data = await getPatientsAction();
+    setPatients(data);
+    setIsLoading(false);
+  };
 
+  useEffect(() => {
+    fetchPatients();
+  }, []);
+
+  const dataToUse = patients;
   const counts = useMemo(() => ({
     all: dataToUse.length,
     dormant: dataToUse.filter(p => p.status === 'dormant').length,
@@ -69,9 +84,13 @@ export default function PatientsListPage() {
             </div>
           </div>
 
-          <button className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl font-bold shadow-md transition-all transform hover:-translate-y-0.5">
-            <UploadCloud size={18} strokeWidth={2.5} />
-            Upload CSV
+          {/* 👈 Updated Button to open Modal */}
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-md transition-all transform hover:-translate-y-0.5"
+          >
+            <Plus size={18} strokeWidth={3} />
+            Add Patient
           </button>
         </div>
 
@@ -109,61 +128,63 @@ export default function PatientsListPage() {
           </div>
         </div>
 
-        {/* Contextual Banner */}
-        {activeFilter === 'dormant' && (
-          <div className="mb-6 flex items-start gap-3 bg-amber-50 border border-amber-200 p-4 rounded-xl animate-in fade-in slide-in-from-top-2 duration-300">
-            <Lightbulb className="text-amber-500 shrink-0 mt-0.5" size={20} strokeWidth={2.5} />
-            <p className="text-sm font-medium text-amber-800">
-              <span className="font-bold text-amber-900">Dormant patients:</span> No visit in 6+ months. Perfect for reactivation campaigns and special checkup offers.
-            </p>
+        {/* Patient Grid / List */}
+        {isLoading ? (
+          <div className="py-20 flex justify-center">
+            <Loader2 className="animate-spin text-indigo-500" size={32} />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 animate-in fade-in duration-500">
+            {filteredPatients.length > 0 ? (
+              filteredPatients.map(patient => {
+                const config = STATUS_CONFIG[patient.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.active;
+                const initial = patient.name.charAt(0).toUpperCase();
+                const formattedLastVisit = patient.lastVisit ? new Date(patient.lastVisit).toLocaleDateString() : 'N/A';
+
+                return (
+                  <Link 
+                    key={patient._id} 
+                    href={`/patients/${patient._id}`}
+                    className="group flex items-center bg-white border border-slate-200 rounded-2xl p-5 hover:border-indigo-300 hover:shadow-md transition-all duration-300"
+                  >
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-black shrink-0 ${config.bg} ${config.text} border ${config.border}`}>
+                      {initial}
+                    </div>
+                    
+                    <div className="ml-4 flex-1 min-w-0">
+                      <h3 className="text-base font-bold text-slate-900 truncate group-hover:text-indigo-600 transition-colors">{patient.name}</h3>
+                      <p className="text-xs font-semibold text-slate-500 mt-0.5">Last visit: {formattedLastVisit}</p>
+                    </div>
+
+                    <div className="flex flex-col items-end ml-2 gap-2">
+                      <span className={`text-[10px] font-extrabold px-2 py-1 rounded-md border ${config.bg} ${config.text} ${config.border} tracking-wider`}>
+                        {config.label}
+                      </span>
+                      <ArrowUpRight size={16} className="text-slate-300 group-hover:text-indigo-500 transition-colors" />
+                    </div>
+                  </Link>
+                );
+              })
+            ) : (
+              <div className="col-span-full py-20 flex flex-col items-center justify-center text-center bg-white border border-slate-200 border-dashed rounded-3xl">
+                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4">
+                  <Search className="text-slate-300" size={28} />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">No patients found</h3>
+                <p className="text-sm text-slate-500 mt-1 max-w-sm">Try adjusting your search query or filters, or add a new patient.</p>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Patient Grid / List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 animate-in fade-in duration-500">
-          {filteredPatients.length > 0 ? (
-            filteredPatients.map(patient => {
-              const config = STATUS_CONFIG[patient.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.active;
-              const initial = patient.name.charAt(0).toUpperCase();
-// Safely handle both MongoDB _id and legacy id formats
-              const patientId = (patient as any)._id || (patient as any).id;
-
-              return (
-                <Link 
-                  key={patientId} 
-                  href={`/patients/${patientId}`}
-                  className="group flex items-center bg-white border border-slate-200 rounded-2xl p-5 hover:border-indigo-300 hover:shadow-md transition-all duration-300"
-                >
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-black shrink-0 ${config.bg} ${config.text} border ${config.border}`}>
-                    {initial}
-                  </div>
-                  
-                  <div className="ml-4 flex-1 min-w-0">
-                    <h3 className="text-base font-bold text-slate-900 truncate group-hover:text-indigo-600 transition-colors">{patient.name}</h3>
-                    <p className="text-xs font-semibold text-slate-500 mt-0.5">Last visit: {patient.lastVisit}</p>
-                  </div>
-
-                  <div className="flex flex-col items-end ml-2 gap-2">
-                    <span className={`text-[10px] font-extrabold px-2 py-1 rounded-md border ${config.bg} ${config.text} ${config.border} tracking-wider`}>
-                      {config.label}
-                    </span>
-                    <ArrowUpRight size={16} className="text-slate-300 group-hover:text-indigo-500 transition-colors" />
-                  </div>
-                </Link>
-              );
-            })
-          ) : (
-            <div className="col-span-full py-20 flex flex-col items-center justify-center text-center bg-white border border-slate-200 border-dashed rounded-3xl">
-              <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4">
-                <Search className="text-slate-300" size={28} />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900">No patients found</h3>
-              <p className="text-sm text-slate-500 mt-1 max-w-sm">Try adjusting your search query or filters to find what you're looking for.</p>
-            </div>
-          )}
-        </div>
-
       </div>
+
+      {/* 👈 Mount Modal Component */}
+      <AddPatientModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onPatientAdded={fetchPatients} 
+      />
     </div>
   );
 }

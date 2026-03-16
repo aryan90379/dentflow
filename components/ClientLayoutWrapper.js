@@ -40,7 +40,7 @@ export default function ClientLayoutWrapper({ children }) {
                 <div className="flex-1 px-4 pt-4 pb-4">
                     <main
                         className="
-                            h-[calc(100vh-80px)]
+                            h-[calc(100vh-70px)]
                             border border-blue-300/40
                             bg-[#F5F5F7]
                             shadow-inner
