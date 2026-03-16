@@ -3,7 +3,16 @@ import React from 'react';
 import { Clock, Phone, MoreHorizontal, CalendarX } from 'lucide-react';
 import { Appointment } from './AppointmentsClient';
 
-export default function DailySchedule({ date, appointments }: { date: Date, appointments: Appointment[] }) {
+// Added onSelectAppt to the props
+export default function DailySchedule({ 
+  date, 
+  appointments, 
+  onSelectAppt 
+}: { 
+  date: Date, 
+  appointments: Appointment[], 
+  onSelectAppt: (id: string) => void 
+}) {
   const formattedDate = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
   return (
@@ -20,7 +29,8 @@ export default function DailySchedule({ date, appointments }: { date: Date, appo
           <div className="space-y-4">
             {appointments.map((app) => (
               <div 
-                key={app.id} 
+                key={app._id} 
+                onClick={() => onSelectAppt(app._id)} // 👈 Triggers the modal open
                 className="group flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 p-5 rounded-2xl border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all bg-white cursor-pointer"
               >
                 {/* Time Block */}
@@ -31,11 +41,11 @@ export default function DailySchedule({ date, appointments }: { date: Date, appo
 
                 {/* Patient Info */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-bold text-slate-900 truncate group-hover:text-indigo-600 transition-colors">{app.patient}</h3>
+                  <h3 className="text-lg font-bold text-slate-900 truncate group-hover:text-indigo-600 transition-colors">{app.patientName}</h3>
                   <div className="flex items-center gap-3 mt-1 text-sm font-medium text-slate-500">
-                    <span className="bg-slate-100 px-2.5 py-0.5 rounded-md text-slate-600">{app.treatment}</span>
+                    <span className="bg-slate-100 px-2.5 py-0.5 rounded-md text-slate-600">{app.treatmentType || 'Consultation'}</span>
                     <span className="flex items-center gap-1">
-                      <Phone size={14} /> {app.phone}
+                      <Phone size={14} /> {app.bookedByPhone}
                     </span>
                   </div>
                 </div>
