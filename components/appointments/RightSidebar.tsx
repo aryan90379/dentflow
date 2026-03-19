@@ -14,6 +14,16 @@ interface RightSidebarProps {
 export default function RightSidebar({ selectedDate, setSelectedDate, mode, setMode, allAppointments }: RightSidebarProps) {
   const [currentMonthDate, setCurrentMonthDate] = useState(new Date(selectedDate));
 
+  // ✅ ADD THIS HELPER to match your database format (YYYY-MM-DD)
+  const formatLocalDate = (date: Date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
+  const selectedDateString = formatLocalDate(selectedDate);
+
   const year = currentMonthDate.getFullYear();
   const month = currentMonthDate.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -34,7 +44,7 @@ export default function RightSidebar({ selectedDate, setSelectedDate, mode, setM
   return (
     <div className="bg-white rounded-[28px] border border-zinc-200/80 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-6 font-sans">
       
-      {/* Apple-style Segmented Control */}
+      {/* Segmented Control */}
       <div className="flex bg-zinc-100/80 p-1 rounded-[16px] mb-6">
         <button 
           onClick={() => setMode('calendar')}
@@ -56,7 +66,6 @@ export default function RightSidebar({ selectedDate, setSelectedDate, mode, setM
 
       {mode === 'calendar' ? (
         <div className="animate-in fade-in duration-300">
-          {/* Month Header */}
           <div className="flex items-center justify-between mb-5 px-1">
             <h2 className="text-[17px] font-semibold tracking-tight text-zinc-900">{monthName} {year}</h2>
             <div className="flex gap-0.5">
@@ -69,14 +78,12 @@ export default function RightSidebar({ selectedDate, setSelectedDate, mode, setM
             </div>
           </div>
 
-          {/* Days Header */}
           <div className="grid grid-cols-7 gap-1 text-center mb-2">
             {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
               <div key={d} className="text-[12px] font-semibold text-zinc-400 py-1">{d}</div>
             ))}
           </div>
 
-          {/* Calendar Grid */}
           <div className="grid grid-cols-7 gap-1.5">
             {Array.from({ length: firstDayOfMonth }).map((_, i) => (
               <div key={`empty-${i}`} className="aspect-square" />
@@ -85,8 +92,10 @@ export default function RightSidebar({ selectedDate, setSelectedDate, mode, setM
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const day = i + 1;
               const cellDate = new Date(year, month, day);
-              const cellDateString = cellDate.toISOString().split('T')[0];
-              const isSelected = selectedDate.toISOString().split('T')[0] === cellDateString;
+              
+              // ✅ FIX: Use local formatter instead of ISO
+              const cellDateString = formatLocalDate(cellDate);
+              const isSelected = selectedDateString === cellDateString;
               const hasAppts = allAppointments.some(a => a.date === cellDateString);
 
               return (
@@ -115,8 +124,9 @@ export default function RightSidebar({ selectedDate, setSelectedDate, mode, setM
           <h2 className="text-[12px] font-semibold text-zinc-400 uppercase tracking-wider mb-3 px-1">Upcoming Dates</h2>
           <div className="h-[380px] overflow-y-auto pr-2 space-y-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-zinc-200 [&::-webkit-scrollbar-thumb]:rounded-full">
             {stripDates.map((d, i) => {
-              const dateStr = d.toISOString().split('T')[0];
-              const isSelected = selectedDate.toISOString().split('T')[0] === dateStr;
+              // ✅ FIX: Use local formatter instead of ISO
+              const dateStr = formatLocalDate(d);
+              const isSelected = selectedDateString === dateStr;
               const dayAppts = allAppointments.filter(a => a.date === dateStr);
 
               return (
