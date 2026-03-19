@@ -19,13 +19,19 @@ export interface Appointment {
 // --- APPLE-STYLE MODAL COMPONENT ---
 const NewAppointmentModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; onClose: () => void; onSuccess: () => void }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    patientName: '',
-    phone: '',
-    treatmentType: '',
-    date: new Date().toISOString().split('T')[0],
-    time: '10:00'
-  });
+  // ✅ LOCAL DATE FUNCTION
+function getTodayLocalDate() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+const [formData, setFormData] = useState({
+  patientName: '',
+  phone: '',
+  treatmentType: '',
+  date: getTodayLocalDate(),
+  time: '10:00'
+});
 
   useEffect(() => {
     if (isOpen) document.body.style.overflow = 'hidden';
@@ -57,8 +63,13 @@ const NewAppointmentModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; 
     setIsSubmitting(false);
 
     if (res.success) {
-      setFormData({ patientName: '', phone: '', treatmentType: '', date: new Date().toISOString().split('T')[0], time: '10:00' });
-      onSuccess();
+setFormData({
+  patientName: '',
+  phone: '',
+  treatmentType: '',
+  date: getTodayLocalDate(),
+  time: '10:00'
+});      onSuccess();
       onClose();
     } else {
       alert("Error: " + res.error);
@@ -155,15 +166,25 @@ const NewAppointmentModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; 
 };
 
 // --- MAIN PARENT COMPONENT ---
-export default function AppointmentsClient({ initialAppointments, onAppointmentAdded }: { initialAppointments: Appointment[], onAppointmentAdded: () => void }) {
+export default function AppointmentsClient({ initialAppointments, onAppointmentAdded }: { initialAppointments: Appointment[]; onAppointmentAdded: () => void }) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [sidebarMode, setSidebarMode] = useState<'calendar' | 'strip'>('calendar');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [viewingApptId, setViewingApptId] = useState<string | null>(null);
 
-  const selectedDateString = selectedDate.toISOString().split('T')[0];
-  const todaysAppointments = initialAppointments.filter(app => app.date === selectedDateString);
+  // ✅ SAFE LOCAL DATE FORMATTER (NO UTC)
+  function formatLocalDate(date: Date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
 
+  const selectedDateString = formatLocalDate(selectedDate);
+
+  const todaysAppointments = initialAppointments.filter(
+    (app) => app.date === selectedDateString
+  );
   return (
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 relative font-sans text-zinc-900 bg-[#fbfbfd] min-h-screen">
       
