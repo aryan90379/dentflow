@@ -3,16 +3,14 @@ import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, Mail, LogOut, ArrowRight, Bell, 
   Link as LinkIcon, MapPin, Phone, Clock, 
-  ShieldCheck, Stethoscope, Edit2, Save, X
+  ShieldCheck, Stethoscope, Edit2, Save, X, Target, Plus // 👈 Added Target & Plus icons
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { signOut } from 'next-auth/react';
-import { fetchUserSettings, updateUserSettings,getCalendarAuthUrlAction } from '@/actions/settings.actions';
+import { fetchUserSettings, updateUserSettings, getCalendarAuthUrlAction, linkWhatsAppAction } from '@/actions/settings.actions';
 import Autocomplete from "react-google-autocomplete";
-// --- CUSTOM TAILWIND SWITCH COMPONENT ---
-import Script from 'next/script'; // 👈 Next.js Script optimizer
-import { linkWhatsAppAction } from '@/actions/settings.actions'; // 👈 Your new action
+import Script from 'next/script'; 
 
 const CustomSwitch = ({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) => (
   <button
@@ -31,22 +29,11 @@ const CustomSwitch = ({ checked, onChange }: { checked: boolean; onChange: (v: b
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
+  show: { opacity: 1, transition: { staggerChildren: 0.1 } }
 };
 const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      type: "spring",
-      stiffness: 300,
-      damping: 24
-    }
-  }
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
 };
 
 export default function SettingsPage() {
@@ -55,13 +42,13 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   // --- UNIFIED STATE MANAGEMENT ---
- // --- UNIFIED STATE MANAGEMENT ---
   const defaultData = {
     name: "", clinicName: "", contactPhone: "",
     operatingHours: { open: "", close: "" },
-    address: { fullAddress: "", mapUrl: "" }, // 👈 Simplified!
+    address: { fullAddress: "", mapUrl: "" }, 
     preferences: { alertsEnabled: true, emailEnabled: true, whatsappEnabled: true },
-    integrations: { googleCalendar: false, whatsappApi: false, googleBusiness: false }
+    integrations: { googleCalendar: false, whatsappApi: false, googleBusiness: false },
+    treatments: [] as string[] // 👈 Added treatments to default state
   };
 
   const [originalData, setOriginalData] = useState(defaultData);
@@ -70,19 +57,19 @@ export default function SettingsPage() {
   // --- EDIT MODES ---
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [newTreatment, setNewTreatment] = useState(""); // 👈 Added state for the input field
 
-
-  // Initialize Facebook SDK for WhatsApp Embedded Signup
   useEffect(() => {
     (window as any).fbAsyncInit = function() {
       (window as any).FB.init({
-        appId      : process.env.NEXT_PUBLIC_META_APP_ID, // Your Meta App ID
+        appId      : process.env.NEXT_PUBLIC_META_APP_ID, 
         cookie     : true,
         xfbml      : true,
         version    : 'v19.0'
       });
     };
   }, []);
+
   // --- DATA FETCHING ---
   useEffect(() => {
     async function loadSettings() {
@@ -97,7 +84,7 @@ export default function SettingsPage() {
             close: data.operatingHours?.close || "10:00 PM" 
           },
           address: {
-            fullAddress: data.address?.fullAddress || "", // 👈 Simplified!
+            fullAddress: data.address?.fullAddress || "", 
             mapUrl: data.address?.mapUrl || ""
           },
           preferences: {
@@ -105,7 +92,8 @@ export default function SettingsPage() {
             emailEnabled: data.preferences?.emailEnabled ?? true,
             whatsappEnabled: data.preferences?.whatsappEnabled ?? true
           },
-          integrations: data.integrations || defaultData.integrations
+          integrations: data.integrations || defaultData.integrations,
+          treatments: data.treatments || [] // 👈 Load treatments from DB
         };
         setOriginalData(mappedData);
         setFormData(mappedData);
@@ -114,7 +102,7 @@ export default function SettingsPage() {
     }
     loadSettings();
   }, []);
-  // --- CHECK IF CHANGES EXIST ---
+
   const hasChanges = JSON.stringify(originalData) !== JSON.stringify(formData);
 
   // --- HANDLERS ---
@@ -127,7 +115,7 @@ export default function SettingsPage() {
     const result = await updateUserSettings(formData);
     
     if (result.success) {
-      setOriginalData(formData); // Reset diff
+      setOriginalData(formData); 
       setIsEditingProfile(false);
       setIsEditingAddress(false);
     } else {
@@ -140,83 +128,61 @@ export default function SettingsPage() {
     setFormData(originalData);
     setIsEditingProfile(false);
     setIsEditingAddress(false);
+    setNewTreatment("");
   };
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: '/signin' });
   };
+
+  // 👈 NEW: Treatments Handlers
+  const handleAddTreatment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newTreatment.trim() && !formData.treatments.includes(newTreatment.trim())) {
+      setFormData(prev => ({ ...prev, treatments: [...prev.treatments, newTreatment.trim()] }));
+      setNewTreatment("");
+    }
+  };
+
+  const handleRemoveTreatment = (treatmentToRemove: string) => {
+    setFormData(prev => ({ ...prev, treatments: prev.treatments.filter(t => t !== treatmentToRemove) }));
+  };
   
 
-const handleConnectWhatsApp = () => {
-    console.log("CONNECT BUTTON CLICKED");
+  const handleConnectWhatsApp = () => {
     const FB = (window as any).FB;
+    if (!FB) return alert("Meta SDK not loaded yet.");
 
-    if (!FB) {
-      alert("Meta SDK not loaded yet.");
-      return;
-    }
-
-    // Trigger the standard OAuth popup
     FB.login((response: any) => {
-      console.log("FB LOGIN RESPONSE", response);
       if (response.authResponse) {
-        const accessToken = response.authResponse.accessToken;
-        
-        // Send the token to your backend
         setIsSaving(true);
-        linkWhatsAppAction(accessToken).then((res) => {
+        linkWhatsAppAction(response.authResponse.accessToken).then((res) => {
           if (res.success) {
-            alert("✅ WhatsApp connected successfully!");
-            setFormData(prev => ({
-              ...prev, integrations: { ...prev.integrations, whatsappApi: true }
-            }));
-          } else {
-            alert("Failed to connect: " + res.error);
-          }
+            setFormData(prev => ({ ...prev, integrations: { ...prev.integrations, whatsappApi: true } }));
+          } else alert("Failed to connect: " + res.error);
           setIsSaving(false);
         });
-      } else {
-        console.log('User cancelled login or did not fully authorize.');
       }
-    }, {
-      // 🔥 Keep the scopes, but REMOVE the "whatsapp_embedded_signup" extra
-      scope: 'whatsapp_business_management,whatsapp_business_messaging',
-      return_scopes: true
-    });
+    }, { scope: 'whatsapp_business_management,whatsapp_business_messaging', return_scopes: true });
   };
-const handleConnectCalendar = async () => {
+
+  const handleConnectCalendar = async () => {
     try {
-      // 1. Fetch the URL securely via the Server Action
       const authUrl = await getCalendarAuthUrlAction();
-      
-      // 2. Redirect if successful
-      if (authUrl) {
-        window.location.href = authUrl; 
-      } else {
-        alert("Failed to get connection link from server. Check your console.");
-      }
+      if (authUrl) window.location.href = authUrl; 
+      else alert("Failed to get connection link from server. Check your console.");
     } catch (err) {
-      console.error("Failed to connect calendar:", err);
       alert("Could not start Google Calendar connection.");
     }
   };
 
-const handlePlaceSelected = (place: any) => {
+  const handlePlaceSelected = (place: any) => {
     if (!place) return;
-
-    // 🔥 Grab the exact full string they selected
-    const fullAddressString = place.name 
-      ? `${place.name}, ${place.formatted_address}` 
-      : place.formatted_address || "";
-
-    // 🗺️ Official Google Maps Embed API URL
+    const fullAddressString = place.name ? `${place.name}, ${place.formatted_address}` : place.formatted_address || "";
     const mapUrl = `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=place_id:${place.place_id}`;
-
-    setFormData(prev => ({
-      ...prev,
-      address: { fullAddress: fullAddressString, mapUrl }
-    }));
+    setFormData(prev => ({ ...prev, address: { fullAddress: fullAddressString, mapUrl } }));
   };
+
   if (loading) {
     return (
       <div className="flex-1 min-h-screen bg-[#F5F5F7] flex items-center justify-center">
@@ -229,11 +195,7 @@ const handlePlaceSelected = (place: any) => {
 
   return (
     <>
-    <Script 
-        src="https://connect.facebook.net/en_US/sdk.js" 
-        strategy="afterInteractive" 
-        crossOrigin="anonymous" 
-      />
+    <Script src="https://connect.facebook.net/en_US/sdk.js" strategy="afterInteractive" crossOrigin="anonymous" />
     <div className="flex-1 min-h-screen bg-[#F5F5F7] font-sans text-slate-900 pb-32 selection:bg-indigo-100 relative">
       
       {/* BACKGROUND EFFECTS */}
@@ -347,6 +309,47 @@ const handlePlaceSelected = (place: any) => {
           {/* COLUMN 2: Map & Integrations */}
           <motion.div variants={itemVariants} className="lg:col-span-7 flex flex-col gap-6">
             
+            {/* 👈 NEW: TREATMENTS & SERVICES CARD */}
+            <div className="bg-white/80 backdrop-blur-xl border border-white/60 rounded-[2rem] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-bl-[100px] -z-10" />
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2.5 bg-emerald-100 text-emerald-600 rounded-xl"><Target size={20} strokeWidth={2.5} /></div>
+                <h3 className="text-sm font-extrabold tracking-widest text-slate-400 uppercase">Treatments & Services</h3>
+              </div>
+
+              <form onSubmit={handleAddTreatment} className="flex gap-3 mb-6">
+                <input 
+                  type="text" 
+                  value={newTreatment} 
+                  onChange={(e) => setNewTreatment(e.target.value)} 
+                  placeholder="e.g. Root Canal, Teeth Whitening..." 
+                  className={inputClass}
+                />
+                <button 
+                  type="submit" 
+                  disabled={!newTreatment.trim()} 
+                  className="bg-indigo-600 text-white px-5 rounded-lg font-bold hover:bg-indigo-700 disabled:opacity-50 transition-colors shrink-0 flex items-center gap-1"
+                >
+                  <Plus size={18} /> Add
+                </button>
+              </form>
+              
+              <div className="flex flex-wrap gap-2">
+                {formData.treatments.length === 0 ? (
+                  <p className="text-sm text-slate-500 font-medium italic">No treatments added yet. Add them to use Google Ads.</p>
+                ) : (
+                  formData.treatments.map((t, idx) => (
+                    <span key={idx} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-100 text-slate-700 text-sm font-bold rounded-full shadow-sm">
+                      {t}
+                      <button type="button" onClick={() => handleRemoveTreatment(t)} className="text-slate-400 hover:text-red-500 transition-colors">
+                        <X size={14} />
+                      </button>
+                    </span>
+                  ))
+                )}
+              </div>
+            </div>
+
             {/* MAP & ADDRESS CARD */}
             <div className="bg-white/80 backdrop-blur-xl border border-white/60 rounded-[2rem] p-2 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col">
               <div className="w-full h-64 sm:h-80 rounded-[1.5rem] overflow-hidden bg-slate-100 relative">
@@ -373,7 +376,6 @@ const handlePlaceSelected = (place: any) => {
                     </p>
                   ) : (
                     <div className="mt-3 space-y-3">
-                      {/* 🔥 The Magic Search Bar */}
                       <Autocomplete
                         apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
                         onPlaceSelected={handlePlaceSelected}
@@ -381,8 +383,6 @@ const handlePlaceSelected = (place: any) => {
                         className={`${inputClass} border-indigo-500 ring-2 ring-indigo-100 font-semibold`}
                         placeholder="Search for your clinic or address..."
                       />
-                      
-                      {/* Single text area for manual edits if needed */}
                       <textarea 
                         value={formData.address.fullAddress} 
                         onChange={e => handleNestedChange('address', 'fullAddress', e.target.value)} 
@@ -409,7 +409,7 @@ const handlePlaceSelected = (place: any) => {
                 <h3 className="text-sm font-extrabold tracking-widest text-slate-400 uppercase">Connected Services</h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-<div className="flex items-center justify-between p-5 bg-slate-50/50 border border-slate-100 rounded-2xl">
+                <div className="flex items-center justify-between p-5 bg-slate-50/50 border border-slate-100 rounded-2xl">
                   <span className="text-sm font-bold text-slate-700">Google Calendar</span>
                   {formData.integrations.googleCalendar ? (
                     <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full text-xs font-bold">
@@ -424,7 +424,7 @@ const handlePlaceSelected = (place: any) => {
                     </button>
                   )}
                 </div>   
-                          <div className="flex items-center justify-between p-5 bg-slate-50/50 border border-slate-100 rounded-2xl">
+                <div className="flex items-center justify-between p-5 bg-slate-50/50 border border-slate-100 rounded-2xl">
                   <span className="text-sm font-bold text-slate-700">WhatsApp API</span>
                   {formData.integrations.whatsappApi ? (
                     <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full text-xs font-bold">
@@ -444,7 +444,6 @@ const handlePlaceSelected = (place: any) => {
             </div>
 
           </motion.div>
-
         </motion.div>
 
         {/* Action Buttons */}
