@@ -153,11 +153,13 @@ export default function SettingsPage() {
       else {
         console.log("User cancelled login or closed popup.", response);
       }
-    }, 
+}, 
     { 
-      config_id: '1077632898764098', // Must match your WhatsApp Login Configuration ID exactly
+      config_id: '1077632898764098', 
       response_type: 'code', 
-      override_default_response_type: true
+      override_default_response_type: true,
+      // 🔥 FIX: Explicitly request the exact permissions the backend needs
+      scope: 'business_management,whatsapp_business_management,whatsapp_business_messaging'
     });
   };
 
