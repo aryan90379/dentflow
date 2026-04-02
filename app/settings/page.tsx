@@ -141,13 +141,13 @@ export default function SettingsPage() {
 
 const handleConnectWhatsApp = () => {
     const FB = (window as any).FB;
-    if (!FB) return alert("Meta SDK not loaded yet.");
+    if (!FB) return alert("Meta SDK not loaded yet. Please wait a second or refresh.");
 
+    // Stripped down payload to prevent Facebook's core.js from crashing
     FB.login((response: any) => {
       if (response.authResponse && response.authResponse.code) {
         setIsSaving(true);
         
-        // Pass the raw string code to the Server Action
         linkWhatsAppAction(response.authResponse.code).then((res) => {
           if (res.success) {
             setFormData(prev => ({ ...prev, integrations: { ...prev.integrations, whatsappApi: true } }));
@@ -164,12 +164,11 @@ const handleConnectWhatsApp = () => {
     { 
       config_id: '1077632898764098',
       response_type: 'code', 
-      override_default_response_type: true,
-      extras: {
-        sessionInfoVersion: '3' 
-      }
+      override_default_response_type: true
     });
   };
+
+  
   const handleConnectCalendar = async () => {
     try {
       const authUrl = await getCalendarAuthUrlAction();
