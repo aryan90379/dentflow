@@ -1,7 +1,7 @@
 import React from "react";
 
 const Page = () => {
-  const buildVersion = "1.0.04"; // 👈 change manually
+  const buildVersion = "1.0.05"; // 👈 change manually
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center">
