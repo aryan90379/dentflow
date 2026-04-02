@@ -149,23 +149,37 @@ export default function SettingsPage() {
   };
   
 
-  const handleConnectWhatsApp = () => {
+const handleConnectWhatsApp = () => {
     const FB = (window as any).FB;
     if (!FB) return alert("Meta SDK not loaded yet.");
 
     FB.login((response: any) => {
-      if (response.authResponse) {
+      if (response.authResponse && response.authResponse.code) {
         setIsSaving(true);
-        linkWhatsAppAction(response.authResponse.accessToken).then((res) => {
+        
+        // Pass the raw string code to the Server Action
+        linkWhatsAppAction(response.authResponse.code).then((res) => {
           if (res.success) {
             setFormData(prev => ({ ...prev, integrations: { ...prev.integrations, whatsappApi: true } }));
-          } else alert("Failed to connect: " + res.error);
+            alert("WhatsApp Connected Successfully!");
+          } else {
+            alert("Failed to connect: " + res.error);
+          }
           setIsSaving(false);
         });
+      } else {
+        console.log("User cancelled login or did not fully authorize.", response);
       }
-    }, { scope: 'whatsapp_business_management,whatsapp_business_messaging', return_scopes: true });
+    }, 
+    { 
+      config_id: '1077632898764098',
+      response_type: 'code', 
+      override_default_response_type: true,
+      extras: {
+        sessionInfoVersion: '3' 
+      }
+    });
   };
-
   const handleConnectCalendar = async () => {
     try {
       const authUrl = await getCalendarAuthUrlAction();

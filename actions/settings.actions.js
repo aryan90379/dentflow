@@ -70,13 +70,15 @@ export async function getCalendarAuthUrlAction() {
     return null;
   }
 }
-export async function linkWhatsAppAction(facebookAccessToken) {
+
+export async function linkWhatsAppAction(facebookAuthCode) {
   try {
     const headers = await getAuthHeaders();
     const res = await fetch(`${API_BASE_URL}/api/settings/whatsapp/connect`, {
       method: "POST",
       headers,
-      body: JSON.stringify({ accessToken: facebookAccessToken })
+      // 🔥 FIX: Send it explicitly as 'code' in the JSON body
+      body: JSON.stringify({ code: facebookAuthCode }) 
     });
 
     const data = await res.json();
