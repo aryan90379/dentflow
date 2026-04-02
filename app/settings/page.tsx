@@ -59,17 +59,7 @@ export default function SettingsPage() {
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [newTreatment, setNewTreatment] = useState(""); // 👈 Added state for the input field
 
-  useEffect(() => {
-    (window as any).fbAsyncInit = function() {
-      (window as any).FB.init({
-        appId      : process.env.NEXT_PUBLIC_META_APP_ID, 
-        cookie     : true,
-        xfbml      : true,
-        version    : 'v19.0'
-      });
-    };
-  }, []);
-
+  
   // --- DATA FETCHING ---
   useEffect(() => {
     async function loadSettings() {
@@ -209,7 +199,23 @@ const handleConnectWhatsApp = () => {
 
   return (
     <>
-    <Script src="https://connect.facebook.net/en_US/sdk.js" strategy="afterInteractive" crossOrigin="anonymous" />
+ <Script 
+      src="https://connect.facebook.net/en_US/sdk.js" 
+      strategy="lazyOnload" 
+      crossOrigin="anonymous" 
+      onLoad={() => {
+        if ((window as any).FB) {
+          (window as any).FB.init({
+            appId      : process.env.NEXT_PUBLIC_META_APP_ID, 
+            cookie     : true,
+            xfbml      : true,
+            version    : 'v19.0'
+          });
+          console.log("Meta SDK Initialized successfully");
+        }
+      }}
+    />
+  
     <div className="flex-1 min-h-screen bg-[#F5F5F7] font-sans text-slate-900 pb-32 selection:bg-indigo-100 relative">
       
       {/* BACKGROUND EFFECTS */}
