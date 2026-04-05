@@ -136,16 +136,17 @@ export default function SettingsPage() {
       if (response.authResponse && response.authResponse.code) {
         setIsSaving(true);
         
-        linkWhatsAppAction(response.authResponse.code).then((res) => {
+linkWhatsAppAction(response.authResponse.code).then((res) => {
           if (res.success) {
             setFormData(prev => ({ ...prev, integrations: { ...prev.integrations, whatsappApi: true } }));
-            alert("WhatsApp Connected Successfully!");
+            // 👇 ADD THIS LINE so the floating save bar doesn't pop up
+            setOriginalData(prev => ({ ...prev, integrations: { ...prev.integrations, whatsappApi: true } }));
+            alert("WhatsApp Connected & Registered Successfully! 🎉");
           } else {
             alert("Backend Failed to connect: " + res.error);
           }
           setIsSaving(false);
-        });
-      } 
+        });      } 
       // Fallback: Meta sent a token instead of a code (Means Config ID is misconfigured)
       else if (response.authResponse && response.authResponse.accessToken) {
         alert("Configuration Error: Meta returned a standard token instead of an Embedded Signup code. Check your Meta App Settings.");
