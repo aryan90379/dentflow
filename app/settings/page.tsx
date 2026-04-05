@@ -129,38 +129,36 @@ export default function SettingsPage() {
       return;
     }
 
-    // 🔥 THE CLEANED UP FLOW
-    windowObj.FB.login(async (response: any) => {
+    windowObj.FB.login((response: any) => {
       console.log("Raw Meta Response:", response);
 
+      // Embedded Signup successfully returned a code
       if (response.authResponse && response.authResponse.code) {
         setIsSaving(true);
         
-        // One single call does the whole flow now!
-        const linkRes = await linkWhatsAppAction(response.authResponse.code);
-        
-        if (linkRes.success) {
-          // Update UI directly to connected
-          setFormData(prev => ({ ...prev, integrations: { ...prev.integrations, whatsappApi: true } }));
-          setOriginalData(prev => ({ ...prev, integrations: { ...prev.integrations, whatsappApi: true } }));
-          alert("WhatsApp Connected & Registered Successfully! 🎉");
-        } else {
-          alert("Backend Failed to connect: " + linkRes.error);
-        }
-        setIsSaving(false);
+        linkWhatsAppAction(response.authResponse.code).then((res) => {
+          if (res.success) {
+            setFormData(prev => ({ ...prev, integrations: { ...prev.integrations, whatsappApi: true } }));
+            alert("WhatsApp Connected Successfully!");
+          } else {
+            alert("Backend Failed to connect: " + res.error);
+          }
+          setIsSaving(false);
+        });
       } 
-      // Fallback: Meta sent a token instead of a code
+      // Fallback: Meta sent a token instead of a code (Means Config ID is misconfigured)
       else if (response.authResponse && response.authResponse.accessToken) {
         alert("Configuration Error: Meta returned a standard token instead of an Embedded Signup code. Check your Meta App Settings.");
       } 
       else {
         console.log("User cancelled login or closed popup.", response);
       }
-    }, 
+}, 
     { 
       config_id: '1077632898764098', 
       response_type: 'code', 
       override_default_response_type: true,
+      // 🔥 FIX: Explicitly request the exact permissions the backend needs
       scope: 'business_management,whatsapp_business_management,whatsapp_business_messaging'
     });
   };
