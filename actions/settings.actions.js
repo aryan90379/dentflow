@@ -51,7 +51,6 @@ export async function updateUserSettings(updatePayload) {
   }
 }
 
-
 export async function getCalendarAuthUrlAction() {
   try {
     const headers = await getAuthHeaders();
@@ -84,9 +83,50 @@ export async function linkWhatsAppAction(facebookAuthCode) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Failed to link WhatsApp");
     
-    return { success: true };
+    // 🔥 FIX: Must return the phoneNumberId to the frontend so it can trigger the OTP
+    return { success: true, phoneNumberId: data.phoneNumberId };
   } catch (error) {
     console.error("linkWhatsAppAction Error:", error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+// 🔥 NEW: Action to Request OTP
+export async function requestWhatsAppOtpAction(phoneNumberId) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/api/settings/whatsapp/request-otp`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ phoneNumberId })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to request OTP");
+    
+    return { success: true };
+  } catch (error) {
+    console.error("requestWhatsAppOtpAction Error:", error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+// 🔥 NEW: Action to Verify OTP
+export async function verifyWhatsAppOtpAction(phoneNumberId, code) {
+  try {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/api/settings/whatsapp/verify-otp`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ phoneNumberId, code })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to verify OTP");
+    
+    return { success: true };
+  } catch (error) {
+    console.error("verifyWhatsAppOtpAction Error:", error.message);
     return { success: false, error: error.message };
   }
 }

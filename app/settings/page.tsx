@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Mail, LogOut, Save } from 'lucide-react';
+import { ArrowLeft, Mail, LogOut, Save, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { signOut } from 'next-auth/react';
@@ -10,7 +10,9 @@ import {
   fetchUserSettings, 
   updateUserSettings, 
   getCalendarAuthUrlAction, 
-  linkWhatsAppAction 
+  linkWhatsAppAction,
+  requestWhatsAppOtpAction,
+  verifyWhatsAppOtpAction
 } from '@/actions/settings.actions';
 
 // Sub Components
@@ -47,6 +49,12 @@ export default function SettingsPage() {
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
+
+  // 🔥 NEW STATE FOR WHATSAPP OTP FLOW
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [activePhoneNumberId, setActivePhoneNumberId] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
 
   // --- DATA FETCHING & SDK INIT ---
   useEffect(() => {
@@ -129,38 +137,64 @@ export default function SettingsPage() {
       return;
     }
 
-    windowObj.FB.login((response: any) => {
+    windowObj.FB.login(async (response: any) => {
       console.log("Raw Meta Response:", response);
 
       // Embedded Signup successfully returned a code
       if (response.authResponse && response.authResponse.code) {
         setIsSaving(true);
         
-        linkWhatsAppAction(response.authResponse.code).then((res) => {
-          if (res.success) {
-            setFormData(prev => ({ ...prev, integrations: { ...prev.integrations, whatsappApi: true } }));
-            alert("WhatsApp Connected Successfully!");
+        const linkRes = await linkWhatsAppAction(response.authResponse.code);
+        
+        if (linkRes.success && linkRes.phoneNumberId) {
+          setActivePhoneNumberId(linkRes.phoneNumberId);
+          
+          // 🔥 Automatically request the OTP once we have the ID
+          const otpRes = await requestWhatsAppOtpAction(linkRes.phoneNumberId);
+          if (otpRes.success) {
+            setShowOtpModal(true); // Open the modal for user to type OTP
           } else {
-            alert("Backend Failed to connect: " + res.error);
+            alert("Connected account, but failed to send OTP: " + otpRes.error);
           }
-          setIsSaving(false);
-        });
+        } else {
+          alert("Backend Failed to connect: " + linkRes.error);
+        }
+        setIsSaving(false);
       } 
-      // Fallback: Meta sent a token instead of a code (Means Config ID is misconfigured)
+      // Fallback: Meta sent a token instead of a code
       else if (response.authResponse && response.authResponse.accessToken) {
         alert("Configuration Error: Meta returned a standard token instead of an Embedded Signup code. Check your Meta App Settings.");
       } 
       else {
         console.log("User cancelled login or closed popup.", response);
       }
-}, 
+    }, 
     { 
       config_id: '1077632898764098', 
       response_type: 'code', 
       override_default_response_type: true,
-      // 🔥 FIX: Explicitly request the exact permissions the backend needs
       scope: 'business_management,whatsapp_business_management,whatsapp_business_messaging'
     });
+  };
+
+  // 🔥 NEW: Handle OTP Submission
+  const handleVerifyOtp = async () => {
+    if (otpCode.length !== 6) return alert("Please enter the 6-digit code.");
+    setIsVerifying(true);
+    
+    const verifyRes = await verifyWhatsAppOtpAction(activePhoneNumberId, otpCode);
+    
+    if (verifyRes.success) {
+      // Update both form and original data so the save bar doesn't pop up unnecessarily
+      setFormData(prev => ({ ...prev, integrations: { ...prev.integrations, whatsappApi: true } }));
+      setOriginalData(prev => ({ ...prev, integrations: { ...prev.integrations, whatsappApi: true } }));
+      setShowOtpModal(false);
+      setOtpCode("");
+      alert("WhatsApp Connected & Number Verified Successfully! 🎉");
+    } else {
+      alert("Verification Failed: " + verifyRes.error);
+    }
+    setIsVerifying(false);
   };
 
   const handleConnectCalendar = async () => {
@@ -270,6 +304,56 @@ export default function SettingsPage() {
               {isSaving ? <span className="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full" /> : <Save size={16} />}
               {isSaving ? "Saving..." : "Save Changes"}
             </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 🚀 OTP VERIFICATION MODAL */}
+      <AnimatePresence>
+        {showOtpModal && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }}
+              className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full relative"
+            >
+              <button onClick={() => setShowOtpModal(false)} className="absolute top-6 right-6 text-slate-400 hover:text-slate-600">
+                <X size={20} />
+              </button>
+              
+              <h3 className="text-2xl font-black text-slate-900 mb-2">Verify Phone Number</h3>
+              <p className="text-slate-500 mb-6 font-medium text-sm">
+                We've sent a 6-digit verification code to your WhatsApp business number via SMS.
+              </p>
+
+              <input 
+                type="text"
+                maxLength={6}
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))} // only allow numbers
+                placeholder="000000"
+                className="w-full text-center text-3xl tracking-[0.5em] font-black text-slate-900 bg-slate-50 border border-slate-200 rounded-2xl py-4 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none"
+              />
+
+              <button 
+                onClick={handleVerifyOtp}
+                disabled={isVerifying || otpCode.length !== 6}
+                className="mt-6 w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-2xl font-bold shadow-lg transition-all"
+              >
+                {isVerifying ? "Verifying..." : "Confirm Code"}
+              </button>
+              
+              <div className="mt-4 text-center">
+                <button 
+                  onClick={() => requestWhatsAppOtpAction(activePhoneNumberId)}
+                  className="text-sm font-bold text-indigo-600 hover:text-indigo-800"
+                >
+                  Resend SMS Code
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
