@@ -120,71 +120,160 @@ export default function SettingsPage() {
   };
 
   // --- INTEGRATION HANDLERS ---
-  const handleConnectWhatsApp = () => {
-    const windowObj = window as any;
-    
-    if (!windowObj.FB || !windowObj.FB.login) {
-      alert("Meta SDK is still loading. Please wait a few seconds and try again.");
-      return;
-    }
+const handleConnectWhatsApp = () => {
+  const windowObj = window as any;
 
-    // Set up placeholders to catch assets from the postMessage frame broadcasts
-    let capturedWabaId: string | null = null;
-    let capturedPhoneNumberId: string | null = null;
+  if (!windowObj.FB || !windowObj.FB.login) {
+    alert("Meta SDK is still loading. Please wait a few seconds and try again.");
+    return;
+  }
 
-    const metaMessageListener = (event: MessageEvent) => {
-      if (!event.origin.endsWith("facebook.com")) return;
-      try {
-        const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
-        if (data.type === "WA_EMBEDDED_SIGNUP" && data.event === "FINISH") {
-          capturedWabaId = data.data?.waba_id || null;
-          capturedPhoneNumberId = data.data?.phone_number_id || null;
-          console.log("Captured asset identifiers from popup:", { capturedWabaId, capturedPhoneNumberId });
-        }
-      } catch (err) {
-        // Ignore unparseable system frames
-      }
-    };
+  const waitForEmbeddedSignupAssets = () => {
+    return new Promise<{
+      wabaId: string | null;
+      phoneNumberId: string | null;
+    }>((resolve) => {
+      let resolved = false;
 
-    // Attach message frame tracking right before launching login sequence
-    window.addEventListener("message", metaMessageListener);
+      const cleanup = (
+        value: { wabaId: string | null; phoneNumberId: string | null }
+      ) => {
+        if (resolved) return;
+        resolved = true;
+        window.removeEventListener("message", listener);
+        resolve(value);
+      };
 
-    windowObj.FB.login((response: any) => {
-      console.log("Raw Meta Response:", response);
+      const listener = (event: MessageEvent) => {
+        const origin = String(event.origin || "");
 
-      if (response.authResponse && response.authResponse.code) {
-        setIsSaving(true);
-        
-        // Pass code along with the intercepted frontend asset IDs to your backend action
-        linkWhatsAppAction(response.authResponse.code, capturedWabaId, capturedPhoneNumberId).then((res) => {
-          if (res.success) {
-            setFormData(prev => ({ ...prev, integrations: { ...prev.integrations, whatsappApi: true } }));
-            setOriginalData(prev => ({ ...prev, integrations: { ...prev.integrations, whatsappApi: true } }));
-            alert("WhatsApp Connected & Registered Successfully! 🎉");
-          } else {
-            alert("Backend Failed to connect: " + res.error);
+        const isFacebookOrigin =
+          origin === "https://www.facebook.com" ||
+          origin === "https://web.facebook.com" ||
+          origin === "https://business.facebook.com" ||
+          origin.endsWith(".facebook.com");
+
+        if (!isFacebookOrigin) return;
+
+        try {
+          const data =
+            typeof event.data === "string"
+              ? JSON.parse(event.data)
+              : event.data;
+
+          if (data?.type !== "WA_EMBEDDED_SIGNUP") return;
+
+          console.log("WA Embedded Signup event:", data);
+
+          if (data.event === "FINISH") {
+            cleanup({
+              wabaId: data.data?.waba_id || data.data?.wabaId || null,
+              phoneNumberId:
+                data.data?.phone_number_id ||
+                data.data?.phoneNumberId ||
+                null,
+            });
           }
-          setIsSaving(false);
-          window.removeEventListener("message", metaMessageListener); // Cleanup tracking
+
+          if (data.event === "CANCEL" || data.event === "ERROR") {
+            cleanup({
+              wabaId: null,
+              phoneNumberId: null,
+            });
+          }
+        } catch {
+          // Ignore non-JSON Facebook SDK messages.
+        }
+      };
+
+      window.addEventListener("message", listener);
+
+      // Prevent hanging forever if Meta does not send FINISH payload.
+      setTimeout(() => {
+        cleanup({
+          wabaId: null,
+          phoneNumberId: null,
         });
-      } 
-      else if (response.authResponse && response.authResponse.accessToken) {
-        alert("Configuration Error: Meta returned a standard token instead of an Embedded Signup code. Check your Meta App Settings.");
-        window.removeEventListener("message", metaMessageListener);
-      } 
-      else {
-        console.log("User cancelled login or closed popup.", response);
-        window.removeEventListener("message", metaMessageListener);
-      }
-    }, 
-    { 
-      config_id: '1077632898764098', 
-      response_type: 'code', 
-      override_default_response_type: true,
-      scope: 'business_management,whatsapp_business_management,whatsapp_business_messaging'
+      }, 10000);
     });
   };
 
+  const signupAssetsPromise = waitForEmbeddedSignupAssets();
+
+  windowObj.FB.login(
+    async (response: any) => {
+      console.log("Raw Meta Response:", response);
+
+      if (response.authResponse?.code) {
+        setIsSaving(true);
+
+        try {
+          const assets = await signupAssetsPromise;
+
+          console.log("Final WA assets sent to backend:", assets);
+
+          const result = await linkWhatsAppAction(
+            response.authResponse.code,
+            assets.wabaId,
+            assets.phoneNumberId
+          );
+
+          if (result.success) {
+            setFormData((prev) => ({
+              ...prev,
+              integrations: {
+                ...prev.integrations,
+                whatsappApi: true,
+              },
+            }));
+
+            setOriginalData((prev) => ({
+              ...prev,
+              integrations: {
+                ...prev.integrations,
+                whatsappApi: true,
+              },
+            }));
+
+            alert("WhatsApp Connected & Registered Successfully! 🎉");
+          } else {
+            alert("Backend failed to connect: " + result.error);
+          }
+        } catch (err: any) {
+          console.error("WhatsApp connect frontend error:", err);
+          alert("WhatsApp connection failed: " + err.message);
+        } finally {
+          setIsSaving(false);
+        }
+
+        return;
+      }
+
+      if (response.authResponse?.accessToken) {
+        alert(
+          "Configuration Error: Meta returned a standard token instead of an Embedded Signup code. Check Facebook Login for Business config."
+        );
+        return;
+      }
+
+      console.log("User cancelled login or closed popup.", response);
+    },
+    {
+      config_id: "1077632898764098",
+      response_type: "code",
+      override_default_response_type: true,
+
+      // Keep this. It helps Meta return WA_EMBEDDED_SIGNUP session info.
+      extras: {
+        sessionInfoVersion: "3",
+        setup: {},
+      },
+
+      scope:
+        "business_management,whatsapp_business_management,whatsapp_business_messaging",
+    }
+  );
+};
   const handleConnectCalendar = async () => {
     try {
       const authUrl = await getCalendarAuthUrlAction();
