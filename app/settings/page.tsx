@@ -185,7 +185,6 @@ export default function SettingsPage() {
     });
   };
 
-
   const handleConnectCalendar = async () => {
     try {
       const authUrl = await getCalendarAuthUrlAction();
