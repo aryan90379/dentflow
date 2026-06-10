@@ -33,7 +33,7 @@ export async function fetchUserSettings() {
   }
 }
 
-export async function updateUserSettings(updatePayload) {
+export async function updateUserSettings(updatePayload: any) {
   try {
     const headers = await getAuthHeaders();
     const res = await fetch(`${API_BASE_URL}/api/settings`, {
@@ -45,12 +45,11 @@ export async function updateUserSettings(updatePayload) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Failed to update settings");
     return { success: true, settings: data.settings };
-  } catch (error) {
+  } catch (error: any) {
     console.error("updateUserSettings Action Error:", error);
     return { success: false, error: error.message };
   }
 }
-
 
 export async function getCalendarAuthUrlAction() {
   try {
@@ -65,27 +64,35 @@ export async function getCalendarAuthUrlAction() {
     if (!res.ok) throw new Error(data.error || "Failed to fetch auth URL");
     
     return data.url;
-  } catch (error) {
+  } catch (error: any) {
     console.error("getCalendarAuthUrlAction Error:", error.message);
     return null;
   }
 }
 
-export async function linkWhatsAppAction(facebookAuthCode) {
+export async function linkWhatsAppAction(
+  facebookAuthCode: string, 
+  wabaId?: string | null, 
+  phoneNumberId?: string | null
+) {
   try {
     const headers = await getAuthHeaders();
     const res = await fetch(`${API_BASE_URL}/api/settings/whatsapp/connect`, {
       method: "POST",
       headers,
-      // 🔥 FIX: Send it explicitly as 'code' in the JSON body
-      body: JSON.stringify({ code: facebookAuthCode }) 
+      // Forward the auth code along with frontend intercepted asset IDs to the backend
+      body: JSON.stringify({ 
+        code: facebookAuthCode, 
+        wabaId, 
+        phoneNumberId 
+      }) 
     });
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Failed to link WhatsApp");
     
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error("linkWhatsAppAction Error:", error.message);
     return { success: false, error: error.message };
   }
